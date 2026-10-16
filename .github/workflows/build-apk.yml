@@ -1,51 +1,34 @@
-name: Build ZORION AI APK
+name: Set up Node.js
+    uses: actions/setup-node@v4
+    with:
+      node-version: 22
+      cache: npm
 
-on:
-  workflow_dispatch:
-  push:
-    branches: [ "main" ]
+  - name: Set up Java
+    uses: actions/setup-java@v4
+    with:
+      distribution: temurin
+      java-version: "21"
 
-permissions:
-  contents: read
+  - name: Install dependencies
+    run: npm install
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  - name: Create Android project
+    run: npx cap add android
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+  - name: Sync web app to Android
+    run: npx cap sync android
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "21"
+  - name: Build debug APK
+    run: |
+      cd android
+      chmod +x gradlew
+      ./gradlew assembleDebug
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Create Android project
-        run: npx cap add android
-
-      - name: Sync web app to Android
-        run: npx cap sync android
-
-      - name: Build debug APK
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: ZORION-AI-debug-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-          retention-days: 14
+  - name: Upload APK
+    uses: actions/upload-artifact@v4
+    with:
+      name: ZORION-AI-debug-APK
+      path: android/app/build/outputs/apk/debug/app-debug.apk
+      if-no-files-found: error
+      retention-days: 14
